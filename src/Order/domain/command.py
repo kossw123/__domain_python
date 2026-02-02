@@ -9,9 +9,7 @@ class CreateOrder(ICommand):
         self.order_id = order_id
         self.customer_id = customer_id
         self.items = items
-class RequestPayment(ICommand):
-    def __init__(self, order_id):
-        self.order_id = order_id
+
 class MarkOrderAsPaid(ICommand):
     def __init__(self, order_id):
         self.order_id = order_id
@@ -61,16 +59,29 @@ class CreateOrderCommandHandler(ICommandHandler):
         self.order_repo.save(order)
         self.uow.register(order)
 
-class RequestPaymentCommandHandler(ICommandHandler):
-    def __init__(self, order_repo, uow):
-        self.order_repo = order_repo
-        self.uow = uow
 
-    def handle(self, command: RequestPayment):
-        order = self.order_repo.find(command.order_id)
+
+class RequestPayment(ICommand):
+    def __init__(self, order_id):
+        self.order_id = order_id
+class RequestPaymentCommandHandler(ICommandHandler):
+    # region Legacy
+    # def __init__(self, order_repo, uow):
+    #     self.order_repo = order_repo
+    #     self.uow = uow
+
+    # def handle(self, command: RequestPayment):
+    #     order = self.order_repo.find(command.order_id)
+    #     order.request_payment()
+    #     self.order_repo.save(order)
+    #     self.uow.register(order)
+    # endregion
+    def __init__(self, order_repository):
+        self.order_repository = order_repository
+    def handle(self, command):
+        order = self.order_repository.find(command.order_id)
         order.request_payment()
-        self.order_repo.save(order)
-        self.uow.register(order)
+        self.order_repository.save(order)
 
 
 class MarkOrderAsPaidCommandHandler(ICommandHandler):

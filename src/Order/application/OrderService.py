@@ -1,7 +1,10 @@
 
 from src.Order.domain.Order import Order
 from src.Order.domain.OrderItem import OrderItem
+from src.Order.domain.command import CreateOrder, RequestPayment
 
+
+#region legacy
 
 class OrderService():
   def __init__(self, order_repository, product_repository, dispatcher, uow):
@@ -88,3 +91,29 @@ class OrderService():
       if not events:
         break
       self.dispatcher.dispatch(events)
+
+#endregion legacy
+
+
+
+class CurrentOrderService():
+  def __init__(self, command_bus, dispatcher, current_uow):
+    self.command_bus = command_bus
+    self.dispatcher = dispatcher
+    self.current_uow = current_uow
+
+
+  def request_payment(self, order_id):
+    command = RequestPayment(order_id)
+
+    with self.current_uow:
+      self.command_bus.dispatch(command)
+    self._publish_events()
+
+  def _publish_events(self):
+    while True:
+      events = self.current_uow.collect_events()
+      if not events:
+        break
+      self.dispatcher.dispatch(events)
+
