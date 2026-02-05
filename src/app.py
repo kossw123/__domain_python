@@ -17,7 +17,6 @@ from src.Infra.Session import Session
 from src.Order.domain.command import RequestPayment, RequestPaymentCommandHandler
 # endregion
 
-# region Legacy : before create to Command
 
 
 dispatcher = EventDispatcher()
@@ -31,11 +30,11 @@ product_service = ProductService(
 order_repository = Repository()
 
 
-order_service = OrderService(
-    order_repository,
-    product_repository,
-    dispatcher,
-    uow)
+# order_service = OrderService(
+#     order_repository,
+#     product_repository,
+#     dispatcher,
+#     uow)
 
 
 
@@ -63,10 +62,27 @@ current_order_service = CurrentOrderService(
 )
 
 command_bus.register(
+    CreateOrder, 
+    CreateOrderCommandHandler(order_repository
+                            product_repository,
+                            uow)
+    )
+command_bus.register(
     RequestPayment, 
     RequestPaymentCommandHandler(order_repository)
     )
-
+command_bus.register(
+    MarkOrderAsPaid,
+    MarkOrderAsPaidCommandHandler(order_repository, uow)
+)
+command_bus.register(
+    ShipOrder,
+    ShipOrderCommandHandler(order_repository, uow)
+)
+command_bus.register(
+    CompleteOrder,
+    CompleteOrderCommandHandler(order_repository, uow)
+)
 # endregion
 
 
@@ -115,23 +131,23 @@ product_service.activate_product(2)
 product_service.activate_product(3)
 product_service.activate_product(4)
 
-
 items = [
     [1,4],
     [2,3],
     [3,1]
 ]
-order_service.create_order(order_id := 1, customer_id := 1, items)
 
+# order_service.create_order(order_id := 1, customer_id := 1, items)
+# order_service.request_payment(order_id)
+# order_service.mark_as_paid(order_id)
+# order_service.ship(order_id)
+# order_service.complete(order_id)
 
 # region Command Refactoring
+current_order_service.create_order(order_id := 1, customer_id := 1, items)
 current_order_service.request_payment(order_id)
+current_order_service.mark_as_paid(order_id)
+current_order_service.ship(order_id)
+current_order_service.complete(order_id)
+
 # endregion 
-
-
-# order_service.request_payment(order_id)
-order_service.mark_as_paid(order_id)
-order_service.ship(order_id)
-order_service.complete(order_id)
-
-# endregion
