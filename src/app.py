@@ -1,6 +1,8 @@
 from src.Infra.EventDispatcher import EventDispatcher
 from src.Infra.Repository import Repository
 from src.Infra.UnitOfWork import UnitOfWork
+from src.Infra.CommandBus import CommandBus
+from src.Infra.Session import Session
 from src.Order.application.OrderService import OrderService
 from src.Payment.application.PaymentService import PaymentService
 from src.Product.domain.events import *
@@ -8,10 +10,18 @@ from src.Order.domain.events import *
 from src.Payment.domain.events import *
 from src.Product.application.ProductService import ProductService
 from src.application.saga.OrderPaymentSaga import OrderPaymentSaga
+from src.Order.domain.command import (CompleteOrder, CompleteOrderCommandHandler, 
+                                      CreateOrder, CreateOrderCommandHandler, 
+                                      MarkOrderAsPaid, MarkOrderAsPaidCommandHandler, 
+                                      RequestPayment, RequestPaymentCommandHandler, 
+                                      ShipOrder, ShipOrderCommandHandler)
+
+
 
 dispatcher = EventDispatcher()
-uow = UnitOfWork()
-
+command_bus = CommandBus()
+session = Session()
+uow = UnitOfWork(session)
 
 product_repository = Repository()
 product_service = ProductService(
@@ -19,11 +29,14 @@ product_service = ProductService(
     dispatcher,
     uow)
 order_repository = Repository()
+
+
 order_service = OrderService(
-    order_repository,
-    product_repository,
+    command_bus,
     dispatcher,
     uow)
+
+
 payment_repository = Repository()
 payment_service = PaymentService(
     order_repository,
@@ -33,7 +46,28 @@ payment_service = PaymentService(
 )
 reward_repository = Repository()
 
-
+command_bus.register(
+    CreateOrder, 
+    CreateOrderCommandHandler(order_repository,
+                            product_repository,
+                            uow)
+    )
+command_bus.register(
+    RequestPayment, 
+    RequestPaymentCommandHandler(order_repository)
+    )
+command_bus.register(
+    MarkOrderAsPaid,
+    MarkOrderAsPaidCommandHandler(order_repository, uow)
+)
+command_bus.register(
+    ShipOrder,
+    ShipOrderCommandHandler(order_repository, uow)
+)
+command_bus.register(
+    CompleteOrder,
+    CompleteOrderCommandHandler(order_repository, uow)
+)
 order_payment_saga = OrderPaymentSaga(
     order_repository,
     payment_repository,
@@ -78,14 +112,14 @@ product_service.activate_product(2)
 product_service.activate_product(3)
 product_service.activate_product(4)
 
-
 items = [
     [1,4],
     [2,3],
     [3,1]
 ]
+
 order_service.create_order(order_id := 1, customer_id := 1, items)
 order_service.request_payment(order_id)
 order_service.mark_as_paid(order_id)
-order_service.ship(order_id)
-order_service.complete(order_id)
+order_service.ship_order(order_id)
+order_service.complete_order(order_id)
