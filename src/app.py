@@ -1,6 +1,8 @@
 from src.Infra.EventDispatcher import EventDispatcher
 from src.Infra.Repository import Repository
-from src.Infra.UnitOfWork import UnitOfWork, current_UnitOfWork
+from src.Infra.UnitOfWork import UnitOfWork
+from src.Infra.CommandBus import CommandBus
+from src.Infra.Session import Session
 from src.Order.application.OrderService import OrderService
 from src.Payment.application.PaymentService import PaymentService
 from src.Product.domain.events import *
@@ -8,19 +10,18 @@ from src.Order.domain.events import *
 from src.Payment.domain.events import *
 from src.Product.application.ProductService import ProductService
 from src.application.saga.OrderPaymentSaga import OrderPaymentSaga
-
-
-# region Command Refactoring
-from src.Order.application.OrderService import CurrentOrderService
-from src.Infra.CommandBus import CommandBus
-from src.Infra.Session import Session
-from src.Order.domain.command import RequestPayment, RequestPaymentCommandHandler
-# endregion
+from src.Order.domain.command import (CompleteOrder, CompleteOrderCommandHandler, 
+                                      CreateOrder, CreateOrderCommandHandler, 
+                                      MarkOrderAsPaid, MarkOrderAsPaidCommandHandler, 
+                                      RequestPayment, RequestPaymentCommandHandler, 
+                                      ShipOrder, ShipOrderCommandHandler)
 
 
 
 dispatcher = EventDispatcher()
-uow = UnitOfWork()
+command_bus = CommandBus()
+session = Session()
+uow = UnitOfWork(session)
 
 product_repository = Repository()
 product_service = ProductService(
@@ -30,12 +31,10 @@ product_service = ProductService(
 order_repository = Repository()
 
 
-# order_service = OrderService(
-#     order_repository,
-#     product_repository,
-#     dispatcher,
-#     uow)
-
+order_service = OrderService(
+    command_bus,
+    dispatcher,
+    uow)
 
 
 payment_repository = Repository()
@@ -47,23 +46,9 @@ payment_service = PaymentService(
 )
 reward_repository = Repository()
 
-
-
-
-# region Refactoring
-
-command_bus = CommandBus()
-session = Session()
-current_uow = current_UnitOfWork(session) 
-current_order_service = CurrentOrderService(
-    command_bus,
-    dispatcher,
-    current_uow
-)
-
 command_bus.register(
     CreateOrder, 
-    CreateOrderCommandHandler(order_repository
+    CreateOrderCommandHandler(order_repository,
                             product_repository,
                             uow)
     )
@@ -83,10 +68,6 @@ command_bus.register(
     CompleteOrder,
     CompleteOrderCommandHandler(order_repository, uow)
 )
-# endregion
-
-
-
 order_payment_saga = OrderPaymentSaga(
     order_repository,
     payment_repository,
@@ -137,17 +118,8 @@ items = [
     [3,1]
 ]
 
-# order_service.create_order(order_id := 1, customer_id := 1, items)
-# order_service.request_payment(order_id)
-# order_service.mark_as_paid(order_id)
-# order_service.ship(order_id)
-# order_service.complete(order_id)
-
-# region Command Refactoring
-current_order_service.create_order(order_id := 1, customer_id := 1, items)
-current_order_service.request_payment(order_id)
-current_order_service.mark_as_paid(order_id)
-current_order_service.ship(order_id)
-current_order_service.complete(order_id)
-
-# endregion 
+order_service.create_order(order_id := 1, customer_id := 1, items)
+order_service.request_payment(order_id)
+order_service.mark_as_paid(order_id)
+order_service.ship_order(order_id)
+order_service.complete_order(order_id)

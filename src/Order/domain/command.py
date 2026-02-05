@@ -44,6 +44,10 @@ class CreateOrderCommandHandler(ICommandHandler):
         self.order_repo.save(order)
         self.uow.register(order)
 
+        print("현재 주문 내역 :")
+        for i in order_items:
+            print(f"상품 : {i.product_id} / 가격 : {i.price} / 수량 : {i.quantity}")
+
 
 
 class RequestPayment(ICommand):
@@ -80,7 +84,7 @@ class CancelOrderCommandHandler(ICommandHandler):
         self.order_repository
         self.uow = uow
     def handle(self, command: ICommand):
-        order = self.order_repository.find_by_order_id(command.order_id)
+        order = self.order_repository.find(command.order_id)
         order.cancel()
         self.order_repository.save(order)
         self.uow.register(order)
@@ -94,7 +98,7 @@ class ShipOrderCommandHandler(ICommandHandler):
         self.order_repo = order_repo
         self.uow = uow
     def handle(self, command: ICommand):
-        order = self.order_repo.find_by_order_id(command.order_id)
+        order = self.order_repo.find(command.order_id)
         order.ship()
         self.order_repo.save(order)
         self.uow.register(order)
@@ -108,4 +112,10 @@ class CompleteOrderCommandHandler(ICommandHandler):
         self.order_repo = order_repo
         self.uow = uow
     def handle(self, command: ICommand):
+        print(f"Complete Order CommandHandler..!")
+        order = self.order_repo.find(command.order_id)
+        order.complete()
+        self.order_repo.save(order)
+        self.uow.register(order)
         
+

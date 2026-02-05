@@ -1,16 +1,7 @@
-
-from src.Order.domain.Order import Order
-from src.Order.domain.OrderItem import OrderItem
-from src.Order.domain.command import 
-  CreateOrder, 
-  RequestPayment,
-  MarkOrderAsPaid,
-  CancelOrder,
-  ShipOrder,
-  CompleteOrder
+from src.Order.domain.command import CreateOrder, RequestPayment, MarkOrderAsPaid, CancelOrder, ShipOrder, CompleteOrder
 
 
-class CurrentOrderService():
+class OrderService():
   def __init__(self, command_bus, dispatcher, current_uow):
     self.command_bus = command_bus
     self.dispatcher = dispatcher
@@ -30,14 +21,17 @@ class CurrentOrderService():
     command = MarkOrderAsPaid(order_id)
     self._publish_command(command)
     self._publish_events()
+    
   def cancel_order(self, order_id):
     command = CancelOrder(order_id)
     self._publish_command(command)
     self._publish_events()
+
   def ship_order(self, order_id):
     command = ShipOrder(order_id)
     self._publish_command(command)
     self._publish_events()
+
   def complete_order(self, order_id):
     command = CompleteOrder(order_id)
     self._publish_command(command)
