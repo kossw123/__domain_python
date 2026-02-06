@@ -1,5 +1,5 @@
 
-class PaymentService():
+class Legacy():
   def __init__(self, order_repository, payment_repository, dispatcher, uow):
     self.order_repository = order_repository
     self.payment_repository = payment_repository
@@ -42,3 +42,45 @@ class PaymentService():
       if not events:
         break
       self.dispatcher.dispatch(events)
+      
+ 
+from contextlib import contextmanager      
+from src.Payment.domain.command import (PaymentInitialize,
+                                        PaymentAuthorize,
+                                        PaymentCapture,
+                                        PaymentFail,
+                                        PaymentRefund
+)
+
+
+class PaymentService():
+  def __init__(self, command_bus, dispatcher, uow):
+    self.command_bus = command_bus
+    self.dispatcher = dispatcher
+    self.uow = uow
+  def authorize_payment(self, id):
+    with self.command_context():
+      self.command_bus.dispatch(PaymentAuthorize(id))
+  def capture_payment(self, id):
+    with self.command_context():
+      self.command_bus.dispatch(PaymentCapture(id))
+  def fail_payment(self, id):
+    with self.command_context()
+      self.command_bus.dispatch(PaymentFail(id))
+  def refund_payment(self, id):
+    with self.command_context():
+      self.command_bus.dispatch(PaymentRefund(id)) 
+          
+  @contextmanager
+  def command_context(self):
+      with self.uow:
+          yield
+      self._publish_events()
+      
+  def _publish_events(self):
+      while True:
+          events = self.uow.collect_events()
+          if not events:
+              break
+          self.dispatcher.dispatch(events)
+     
