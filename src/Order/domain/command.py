@@ -1,12 +1,9 @@
 import datetime
 from src.Order.domain.Order import Order
 from src.Order.domain.OrderItem import OrderItem
+from src.interface.ICommand import ICommand
+from src.interface.ICommandHandler import ICommandHandler
 
-class ICommand():
-    occured_at = datetime.datetime.now()
-class ICommandHandler():
-    def handle(self, command: ICommand):
-        pass
 
 
 class CreateOrder(ICommand):
@@ -25,7 +22,6 @@ class CreateOrderCommandHandler(ICommandHandler):
 
         for product_id, quantity in command.items:
             product = self.product_repo.find(product_id)
-            product.decrease_stock(quantity)
 
             order_items.append(
                 OrderItem.create(

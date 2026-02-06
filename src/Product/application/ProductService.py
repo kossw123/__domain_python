@@ -1,48 +1,39 @@
-from src.Product.domain.Product import Product
+from contextlib import contextmanager
+from src.Product.domain.command import (
+    ProductCreate,
+    ProductActivate,
+    ProductDiscontinued
+)
+
 
 
 class ProductService():
-  def __init__(self, repository, dispatcher, uow):
-    self.repository = repository
-    self.dispatcher = dispatcher
-    self.uow = uow
-  def create_product(self, id, name, price, stock):
-    # product = Product(id, name, price, stock)
-    # product.create_product()
-    # self.repository.save(product)
-    # self.__register_uow_to_dispatch(product)
-    product = Product.create(id, name, price, stock)
-    self.repository.save(product)
-    self.__register_uow_to_dispatch(product)
+    def __init__(self, command_bus, dispatcher, uow):
+        self.command_bus = command_bus
+        self.dispatcher = dispatcher
+        self.uow = uow
 
-  def activate_product(self, id):
-    product = self.repository.find(id)
-    product.activate()
-    self.repository.save(product)
-    self.__register_uow_to_dispatch(product)
+    def create_product(self, id, name, price):
+        with self.command_context():
+            self.command_bus.dispatch(ProductCreate(id, name, price))
 
-  def decrease_stock(self, id, quantity):
-    product = self.repository.find(id)
-    product.decrease_stock(quantity)
-    self.repository.save(product)
-    self.__register_uow_to_dispatch(product)
+    def activate_product(self, id):
+        with self.command_context():
+            self.command_bus.dispatch(ProductActivate(id))
 
-  def increase_stock(self, id, quantity):
-    product = self.repository.find(id)
-    product.increase_stock(quantity)
-    self.repository.save(product)
-    self.__register_uow_to_dispatch(product)
+    def discontinue_product(self, id):
+        with self.command_context():
+            self.command_bus.dispatch(ProductDiscontinued(id))
+        
+    def _publish_events(self):
+        while True:
+            events = self.uow.collect_events()
+            if not events:
+                break
+            self.dispatcher.dispatch(events)
 
-  def discontinued(self, id):
-    product = self.repository.find(id)
-    product.discontinued()
-    self.repository.save(product)
-    self.__register_uow_to_dispatch(product)
-
-  def __register_uow_to_dispatch(self, obj):
-    self.uow.register(obj)
-    while True:
-      events = self.uow.collect_events()
-      if not events:
-        break
-      self.dispatcher.dispatch(events)
+    @contextmanager
+    def command_context(self):
+        with self.uow:
+            yield
+        self._publish_events()
