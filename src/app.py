@@ -10,11 +10,13 @@ from src.Order.domain.events import *
 from src.Payment.domain.events import *
 from src.Product.application.ProductService import ProductService
 from src.application.saga.OrderPaymentSaga import OrderPaymentSaga
+from src.Product.domain.command import (ProductCreate, ProductCreateHandler)
 from src.Order.domain.command import (CompleteOrder, CompleteOrderCommandHandler, 
                                       CreateOrder, CreateOrderCommandHandler, 
                                       MarkOrderAsPaid, MarkOrderAsPaidCommandHandler, 
                                       RequestPayment, RequestPaymentCommandHandler, 
                                       ShipOrder, ShipOrderCommandHandler)
+
 
 
 
@@ -24,27 +26,28 @@ session = Session()
 uow = UnitOfWork(session)
 
 product_repository = Repository()
+order_repository = Repository()
+payment_repository = Repository()
+reward_repository = Repository()
+
+
 product_service = ProductService(
-    product_repository,
+    command_bus,
     dispatcher,
     uow)
-order_repository = Repository()
-
-
 order_service = OrderService(
     command_bus,
     dispatcher,
     uow)
 
 
-payment_repository = Repository()
 payment_service = PaymentService(
     order_repository,
     payment_repository,
     dispatcher,
     uow
 )
-reward_repository = Repository()
+
 
 command_bus.register(
     CreateOrder, 
@@ -68,6 +71,15 @@ command_bus.register(
     CompleteOrder,
     CompleteOrderCommandHandler(order_repository, uow)
 )
+command_bus.register(
+    ProductCreate,
+    ProductCreateHandler(product_repository, uow)
+)
+
+
+
+
+
 order_payment_saga = OrderPaymentSaga(
     order_repository,
     payment_repository,
@@ -103,14 +115,17 @@ dispatcher.register(PaymentRefunded, PaymentRefundedEventHandler())
 
 
 
-product_service.create_product(1, 'Americano', 3000, 10)
-product_service.create_product(2, 'Caffelatte', 4000, 10)
-product_service.create_product(3, 'Caramel Macchiato', 5000, 10)
-product_service.create_product(4, 'Mint Tea', 4000, 10)
-product_service.activate_product(1)
-product_service.activate_product(2)
-product_service.activate_product(3)
-product_service.activate_product(4)
+product_service.create_product(1, 'Americano', 3000)
+product_service.create_product(2, 'Caffelatte', 4000)
+product_service.create_product(3, 'Caramel Macchiato', 5000)
+product_service.create_product(4, 'Mint Tea', 4000)
+
+# product_service.activate_product(1)
+# product_service.activate_product(2)
+# product_service.activate_product(3)
+# product_service.activate_product(4)
+
+
 
 items = [
     [1,4],
