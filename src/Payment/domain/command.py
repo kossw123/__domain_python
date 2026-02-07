@@ -1,16 +1,11 @@
 from src.interface.ICommand import ICommand
 from src.interface.ICommandHandler import ICommandHandler
-
-#   INITIALIZED = 0
-#   AUTHORIZED = 1
-#   CAPTURED = 2
-#   FAILED = 3
-#   REFUNCED = 4
+from src.Payment.domain.Payment import Payment
 
 
 class PaymentInitialize(ICommand):
-    def __init__(self, id, customer_id, amount):
-        self.id = id
+    def __init__(self, order_id, customer_id, amount):
+        self.order_id = order_id
         self.customer_id = customer_id
         self.amount = amount
 class PaymentInitializeHandler(ICommandHandler):
@@ -18,12 +13,14 @@ class PaymentInitializeHandler(ICommandHandler):
         self.payment_repo = payment_repo
         self.uow = uow
     def handle(self, command: ICommand):
-        pass
+        payment = Payment.create(command.order_id, command.customer_id, command.amount)
+        self.payment_repo.save(payment)
+        self.uow.register(payment)
 
 
 class PaymentAuthorize(ICommand):
-    def __init__(self, id, customer_id, amount):
-        self.id = id
+    def __init__(self, order_id, customer_id, amount):
+        self.order_id = order_id
         self.customer_id = customer_id
         self.amount = amount
 class PaymentAuthorizeHandler(ICommandHandler):
@@ -31,7 +28,10 @@ class PaymentAuthorizeHandler(ICommandHandler):
         self.payment_repo = payment_repo
         self.uow = uow
     def handle(self, command: ICommand):
-        pass
+        payment = self.payment_repo.find(command.order_id)
+        payment.authorize()
+        self.payment_repo.save(payment)
+        self.uow.register(payment)
 
 
 class PaymentCapture(ICommand):
@@ -44,7 +44,10 @@ class PaymentCaptureHandler(ICommandHandler):
         self.payment_repo = payment_repo
         self.uow = uow
     def handle(self, command: ICommand):
-        pass
+        payment = self.payment_repo.find(command.order_id)
+        payment.capture()
+        self.payment_repo.save(payment)
+        self.uow.register(payment)
 
 
 class PaymentFail(ICommand):
@@ -57,7 +60,10 @@ class PaymentFailHandler(ICommandHandler):
         self.payment_repo = payment_repo
         self.uow = uow
     def handle(self, command: ICommand):
-        pass
+        payment = self.payment_repo.find(command.order_id)
+        payment.fail()
+        self.payment_repo.save(payment)
+        self.uow.register(payment)
 
 
 class PaymentRefund(ICommand):
@@ -70,4 +76,7 @@ class PaymentRefundHandler(ICommandHandler):
         self.payment_repo = payment_repo
         self.uow = uow
     def handle(self, command: ICommand):
-        pass
+        payment = self.payment_repo.find(command.order_id)
+        payment.refund()
+        self.payment_repo.save(payment)
+        self.uow.register(payment)
