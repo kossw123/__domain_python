@@ -6,8 +6,9 @@ class Session():
     self.actions.append(action)
 
   def commit(self):
-    print("COMMIT:", self.actions)
+    #print("COMMIT:", self.actions)
+    print("[UOW] COMMIT")
 
   def rollback(self):
-    print("ROLLBACK")
+    print("[UOW] ROLLBACK")
     self.actions.clear()

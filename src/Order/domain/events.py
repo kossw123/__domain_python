@@ -12,10 +12,10 @@ class OrderCreated(IEvent):
 
 class OrderCreatedEventHandler(IEventHandler):
   def handle(self, event):
-    print(f"OrderCreated: {event.id}, Customer_id: {event.customer_id}")
+    print(f"[EVENT] OrderCreated | order_id={event.id} customer_id={event.customer_id}")
+    print(f"   현재 주문된 내역")
     for item in event.products:
-      print(f"- Product_id: {item.product_id}, Quantity: {item.quantity}")
-      print(f"- total : {item.total()}")
+      print(f"      Product_id:{item.product_id} | Quantity:{item.quantity} | total:{item.total()}")
       
 class OrderPaymentRequested(IEvent):
   def __init__(self, order_id, customer_id):
@@ -28,7 +28,7 @@ class OrderPaymentRequestedEventHandler(IEventHandler):
     self.dispathcer = dispathcer
     self.uow = uow
   def handle(self, event):
-    print(f"OrderPaymentRequested: {event.order_id}, Customer_id: {event.customer_id}")
+    print(f"[EVENT] OrderPaymentRequested | order_id={event.order_id} customer_id={event.customer_id}")
     order = self.order_repository.find(event.order_id)
     total = sum(item.total() for item in order.products)
 
@@ -56,11 +56,13 @@ class OrderPaidEventHandler(IEventHandler):
   def __init__(self, payment_repository):
     self.payment_repository = payment_repository
   def handle(self, event):
-    print(f"OrderPaid: {event.order_id}, Customer_id: {event.customer_id}")
+    print(f"[EVENT] OrderPaid | order_id={event.order_id} customer_id={event.customer_id}")
     payment = self.payment_repository.find_by_order_id(event.order_id)
+
     if not payment:
       raise Exception("payment not found")
-    print(f"OrderPaid.Payment Amount: {payment.amount}")
+    
+    print(f"    Amount: {payment.amount}")
     payment.authorize()
     self.payment_repository.save(payment)
 
@@ -71,16 +73,16 @@ class OrderCancelled(IEvent):
     self.customer_id = customer_id
 class OrderCancelledEventHandler(IEventHandler):
   def handle(self, event):
-    print(f"OrderCancelled: {event.id}, Customer_id: {event.customer_id}")
+    print(f"[EVENT] OrderCancelled | order_id={event.id}")
 class OrderShipped(IEvent):
   def __init__(self, id):
     self.id = id
 class OrderShippedEventHandler(IEventHandler):
   def handle(self, event):
-    print(f"OrderShipped: {event.id}")
+    print(f"[EVENT] OrderShipped | order_id={event.id}")
 class OrderCompleted(IEvent):
   def __init__(self, id):
     self.id = id
 class OrderCompletedEventHandler(IEventHandler):
   def handle(self, event):
-    print(f"OrderCompleted: {event.id}")
+    print(f"[EVENT] OrderCompleted | order_id={event.id}")

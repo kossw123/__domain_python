@@ -11,6 +11,7 @@ class OrderPaymentSaga(ISaga):
         self.dispatcher = dispatcher
         self.uow = uow
 
+
     def handle(self, event):
         if isinstance(event, OrderPaymentRequested):
             self._on_order_payment_requested(event)
@@ -19,8 +20,9 @@ class OrderPaymentSaga(ISaga):
         if isinstance(event, OrderCancelled):   
             self._on_order_cancelled(event)
 
+
     def _on_order_payment_requested(self, event):
-        print(f"OrderPaymentRequested: {event.order_id}, Customer_id: {event.customer_id}")
+        print(f"[EVENT] OrderPaymentRequested | order_id={event.order_id} customer_id={event.customer_id}")
         order = self.order_repository.find(event.order_id)
         total = sum(item.total() for item in order.products)
 
@@ -30,14 +32,15 @@ class OrderPaymentSaga(ISaga):
         self.payment_repository.save(payment)
         self._process(payment)
 
+
     def _on_order_paid(self, event):
-        print(f"OrderPaid: {event.order_id}, Customer_id: {event.customer_id}")
+        print(f"[EVENT] OrderPaid | order_id={event.order_id} customer_id={event.customer_id}")
         payment = self.payment_repository.find_by_order_id(event.order_id)
-        print(f"Payment Amount: {payment.amount}")
+        print(f"    Payment Amount: {payment.amount}")
         payment.capture()
         self.payment_repository.save(payment)
         self._process(payment)
-        print("Payment Captured!!")
+        print(f"[EVENT] PaymentCaptured | order_id={event.order_id} customer_id={event.customer_id}")
 
     def _on_payment_failed(self, event):
         order = self.order_repository.find(event.order_id)

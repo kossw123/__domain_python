@@ -40,9 +40,10 @@ class CreateOrderCommandHandler(ICommandHandler):
         self.order_repo.save(order)
         self.uow.register(order)
 
-        print("현재 주문 내역 :")
+        print(f"[COMMAND] CreateOrder | order_id={command.order_id} customer_id={command.customer_id}")
+        print(" 현재 주문 내역 :")
         for i in order_items:
-            print(f"상품 : {i.product_id} / 가격 : {i.price} / 수량 : {i.quantity}")
+            print(f"    상품={i.product_id} | 가격={i.price} | 수량={i.quantity}")
 
 
 
@@ -56,6 +57,7 @@ class RequestPaymentCommandHandler(ICommandHandler):
         order = self.order_repository.find(command.order_id)
         order.request_payment()
         self.order_repository.save(order)
+        print(f"[COMMAND] RequestPayment | order_id={command.order_id}")
 
 
 class MarkOrderAsPaid(ICommand):
@@ -71,6 +73,8 @@ class MarkOrderAsPaidCommandHandler(ICommandHandler):
         order.mark_as_paid()
         self.order_repo.save(order)
         self.uow.register(order)
+        print(f"[COMMAND] MarkOrderAsPaid | order_id={command.order_id}")
+
 
 class CancelOrder(ICommand):
     def __init__(self, order_id):
@@ -84,6 +88,7 @@ class CancelOrderCommandHandler(ICommandHandler):
         order.cancel()
         self.order_repository.save(order)
         self.uow.register(order)
+        print(f"[COMMAND] CancelOrder | order_id={command.order_id}")
 
 
 class ShipOrder(ICommand):
@@ -98,7 +103,7 @@ class ShipOrderCommandHandler(ICommandHandler):
         order.ship()
         self.order_repo.save(order)
         self.uow.register(order)
-
+        print(f"[COMMAND] ShipOrder | order_id={command.order_id}")
 
 class CompleteOrder(ICommand):
     def __init__(self, order_id):
@@ -108,10 +113,10 @@ class CompleteOrderCommandHandler(ICommandHandler):
         self.order_repo = order_repo
         self.uow = uow
     def handle(self, command: ICommand):
-        print(f"Complete Order CommandHandler..!")
         order = self.order_repo.find(command.order_id)
         order.complete()
         self.order_repo.save(order)
         self.uow.register(order)
-        
+        print(f"[COMMAND] CompleteOrder | order_id={command.order_id}")
+
 

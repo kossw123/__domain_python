@@ -39,11 +39,8 @@ order_service = OrderService(
     command_bus,
     dispatcher,
     uow)
-
-
 payment_service = PaymentService(
-    order_repository,
-    payment_repository,
+    command_bus,
     dispatcher,
     uow
 )
@@ -90,8 +87,6 @@ order_payment_saga = OrderPaymentSaga(
 
 dispatcher.register(ProductCreated, ProductCreatedEventHandler())
 dispatcher.register(ProductActivated, ProductActivatedEventHandler())
-dispatcher.register(ProductStockIncreased, ProductStockIncreasedEventHandler())
-dispatcher.register(ProductStockDecreased, ProductStockDecreasedEventHandler())
 dispatcher.register(OutOfStock, OutOfStockEventHandler())
 dispatcher.register(ProductDiscontinued, ProductDiscontinuedEventHandler())
 

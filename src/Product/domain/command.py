@@ -12,11 +12,10 @@ class ProductCreateHandler(ICommandHandler):
         self.product_repo = product_repo
         self.uow = uow
     def handle(self, command: ICommand):
-        print(f"Product Create Command 발생!!")
+        print(f"[COMMAND] ProductCreate | product_id={command.id} name={command.name} price={command.price}")
         product = Product.create(command.id, command.name, command.price)
         self.product_repo.save(product)
         self.uow.register(product)
-        print("선택된 상품을 등록했습니다.")
 
 
 class ProductActivate(ICommand):
@@ -27,12 +26,11 @@ class ProductActivateHandler(ICommandHandler):
         self.product_repo = product_repo
         self.uow = uow
     def handle(self, command:ICommand):
-        print(f"Product Activate 발생!! : [{command.id}]")
+        print(f"[COMMAND] ProductActivate | product_id={command.id} name={command.name} price={command.price}")
         product = self.product_repo.find(command.id)
         product.activate()
         self.product_repo.save(product)
         self.uow.register(product)
-        print("선택된 상품이 활성화 되었습니다.")
 
 
 
@@ -43,7 +41,7 @@ class OutOfStock(ICommand):
         self.name = name
 class OutOfStockEventHandler(ICommandHandler):
     def handle(self, command:ICommand):
-        print(f"Out Of Stock : 발생!! : [{command.id}, {command.name}, {command.stock}]")
+        print(f"[COMMAND] OutOfStock | product_id={command.id} name={command.name}")
 
 class ProductDiscontinued(ICommand):
     def __init__(self, id, name):
@@ -54,9 +52,8 @@ class ProductDiscontinuedEventHandler(ICommandHandler):
             self.product_repo = product_repo
             self.uow = uow
     def handle(self, command:ICommand):
-        print(f"Product Discontinue 발생!! : {command.id}, {command.name}")
+        print(f"[COMMAND] ProductDiscontinued | product_id={command.id} name={command.name}")
         product = self.product_repo.find(command.id)
         product.discontinued()
         self.product_repo.save(product)
         self.uow.register(product)
-        print("선택된 상품이 비활성화 되었습니다.")
